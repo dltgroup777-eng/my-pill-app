@@ -20,7 +20,7 @@ export default function RegisterPage() {
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, #0a1628 0%, #1a2744 100%)', color: '#fff' }}>
-            <div style={{ background: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)', color: '#000', padding: '10px 16px', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>🧪 개발 모드</div>
+            <div style={{ background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)', color: '#fff', padding: '10px 16px', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>✅ Mock 모드</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 24, maxWidth: 400, margin: '0 auto', width: '100%' }}>
                 <div style={{ marginBottom: 32 }}><Link href="/login" style={{ display: 'inline-block', marginBottom: 16, color: '#94a3b8', fontSize: 15 }}>← 뒤로</Link><h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>회원가입</h1><p style={{ fontSize: 14, color: '#94a3b8' }}>약안전 서비스에 가입하세요</p></div>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

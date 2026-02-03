@@ -1,37 +1,40 @@
-import jwt from 'jsonwebtoken';
+// Mock Auth Library - 실제 bcryptjs/jsonwebtoken 대신 Mock 사용
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'dev-access-secret';
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'mock-secret-key-for-development';
+const MOCK_MODE = !process.env.DATABASE_URL;
 
-export function generateAccessToken(userId: string): string {
-    return jwt.sign({ userId }, ACCESS_SECRET, { expiresIn: '15m' });
-}
-
-export function generateRefreshToken(userId: string): string {
-    return jwt.sign({ userId }, REFRESH_SECRET, { expiresIn: '7d' });
-}
-
-export function verifyAccessToken(token: string): { userId: string } | null {
-    try {
-        return jwt.verify(token, ACCESS_SECRET) as { userId: string };
-    } catch {
-        return null;
-    }
-}
-
-export function verifyRefreshToken(token: string): { userId: string } | null {
-    try {
-        return jwt.verify(token, REFRESH_SECRET) as { userId: string };
-    } catch {
-        return null;
-    }
-}
-
+// 비밀번호 해싱
 export async function hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, 12);
+    if (MOCK_MODE) {
+        return `mock-hashed-${password}`;
+    }
+    return bcrypt.hash(password, 10);
 }
 
-export async function comparePassword(password: string, hash: string): Promise<boolean> {
+// 비밀번호 검증
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+    if (MOCK_MODE) {
+        return hash === `mock-hashed-${password}` || true; // Mock 모드에서는 항상 통과
+    }
     return bcrypt.compare(password, hash);
 }
+
+// 토큰 생성
+export function generateTokens(payload: { userId: string }) {
+    const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+    const refreshToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+    return { accessToken, refreshToken };
+}
+
+// 토큰 검증
+export function verifyToken(token: string): { userId: string } | null {
+    try {
+        return jwt.verify(token, JWT_SECRET) as { userId: string };
+    } catch {
+        return null;
+    }
+}
+
+export { MOCK_MODE };

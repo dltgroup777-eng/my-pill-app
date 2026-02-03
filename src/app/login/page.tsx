@@ -35,7 +35,7 @@ export default function LoginPage() {
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, #0a1628 0%, #1a2744 100%)', color: '#fff' }}>
-            <div style={{ background: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)', color: '#000', padding: '10px 16px', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>🧪 개발 모드 - DB 연결 없이 테스트 가능</div>
+            <div style={{ background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)', color: '#fff', padding: '10px 16px', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>✅ Mock 모드 - DB 연결 없이 테스트</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, maxWidth: 400, margin: '0 auto', width: '100%' }}>
                 <div style={{ textAlign: 'center', marginBottom: 40 }}>
                     <span style={{ fontSize: 64, display: 'block', marginBottom: 12 }}>💊</span>
@@ -51,7 +51,6 @@ export default function LoginPage() {
                 <button onClick={handleBiometric} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: 16, marginTop: 12, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 14, color: '#6ee7b7', fontSize: 16, fontWeight: 600 }}>🔐 생체인식으로 로그인</button>
                 <button onClick={handleGuestLogin} style={{ width: '100%', padding: 14, marginTop: 8, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 12, color: '#94a3b8', fontSize: 15 }}>⏩ 로그인 건너뛰기 (게스트)</button>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 32, fontSize: 14, color: '#64748b' }}><p>계정이 없으신가요?</p><Link href="/register" style={{ color: '#3b82f6', fontWeight: 600 }}>회원가입</Link></div>
-                <div style={{ marginTop: 24, padding: 12, background: 'rgba(59,130,246,0.1)', border: '1px dashed rgba(59,130,246,0.3)', borderRadius: 8, textAlign: 'center' }}><p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 4 }}>테스트 계정</p><code style={{ fontSize: 13, color: '#93c5fd' }}>test@test.com / test1234</code></div>
             </div>
         </div>
     );

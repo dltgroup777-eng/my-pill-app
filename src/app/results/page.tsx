@@ -13,7 +13,7 @@ export default function ResultsPage() {
     useEffect(() => {
         const saved = localStorage.getItem('analysisResult');
         if (saved) { const parsed = JSON.parse(saved); setData(parsed); if (parsed.overallRisk === 'danger') setTimeout(() => setShowPremiumModal(true), 1500); }
-        else setData({ overallRisk: 'notice', results: [], matchedIngredients: [{ original: '샘플', standardName: '샘플 성분' }] });
+        else setData({ overallRisk: 'safe', results: [], matchedIngredients: [{ original: '샘플', standardName: '샘플 성분' }] });
     }, []);
 
     const getRiskStyle = (level: string) => ({ danger: { bg: 'rgba(239, 68, 68, 0.15)', border: '#ef4444', color: '#fca5a5', icon: '🚨', label: '위험' }, warning: { bg: 'rgba(249, 115, 22, 0.15)', border: '#f97316', color: '#fdba74', icon: '⚠️', label: '주의' }, notice: { bg: 'rgba(234, 179, 8, 0.15)', border: '#eab308', color: '#fde047', icon: '💡', label: '참고' } }[level] || { bg: 'rgba(16,185,129,0.15)', border: '#10b981', color: '#6ee7b7', icon: '✅', label: '안전' });

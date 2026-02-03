@@ -77,9 +77,15 @@ export default function ScanPage() {
         if (ingredients.length === 0) return;
         setLoading(true);
         const hasAspirin = ingredients.some(i => i.code === 'ASPIRIN');
-        const result = hasAspirin
-            ? { overallRisk: 'danger', results: [{ ruleId: 'rule-1', level: 'danger', triggerIngredient: { nameKo: '와파린' }, targetIngredient: { nameKo: '아스피린' }, message: { conclusion: '심각한 출혈 위험 증가', reason: '두 약물 모두 혈액 응고를 억제', action: '즉시 의사와 상담하세요' } }], matchedIngredients: ingredients.map(i => ({ original: i.original, standardName: i.nameKo })) }
-            : { overallRisk: 'notice', results: [], matchedIngredients: ingredients.map(i => ({ original: i.original, standardName: i.nameKo })) };
+        const hasWarfarin = ingredients.some(i => i.code === 'WARFARIN');
+        let result;
+        if (hasAspirin && hasWarfarin) {
+            result = { overallRisk: 'danger', results: [{ ruleId: 'rule-1', level: 'danger', triggerIngredient: { nameKo: '와파린' }, targetIngredient: { nameKo: '아스피린' }, message: { conclusion: '심각한 출혈 위험 증가', reason: '두 약물 모두 혈액 응고를 억제', action: '즉시 의사와 상담하세요' } }], matchedIngredients: ingredients.map(i => ({ original: i.original, standardName: i.nameKo })) };
+        } else if (hasAspirin) {
+            result = { overallRisk: 'warning', results: [{ ruleId: 'rule-2', level: 'warning', triggerIngredient: { nameKo: '아스피린' }, message: { conclusion: '위장 자극 주의', reason: '공복 복용 시 위장 자극 가능', action: '식후 복용을 권장합니다' } }], matchedIngredients: ingredients.map(i => ({ original: i.original, standardName: i.nameKo })) };
+        } else {
+            result = { overallRisk: 'safe', results: [], matchedIngredients: ingredients.map(i => ({ original: i.original, standardName: i.nameKo })) };
+        }
         localStorage.setItem('analysisResult', JSON.stringify(result));
         router.push('/results');
     };
@@ -129,7 +135,7 @@ export default function ScanPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 14 }}><span style={{ fontSize: 18 }}>🔍</span><input type="text" placeholder="약물 또는 성분명 검색..." value={inputValue} onChange={(e) => handleSearch(e.target.value)} style={{ flex: 1, border: 'none', background: 'none', outline: 'none', fontSize: 16, color: '#fff' }} /></div>
                         {searchResults.length > 0 && <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden', maxHeight: 260, overflowY: 'auto' }}>{searchResults.map((r) => <button key={r.code} onClick={() => selectIngredient(r)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '14px 16px', background: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'left', color: '#fff' }}><span style={{ fontWeight: 600 }}>{r.nameKo}</span><span style={{ fontSize: 11, padding: '4px 8px', background: 'rgba(59,130,246,0.15)', borderRadius: 4, color: '#93c5fd' }}>{r.category}</span></button>)}</div>}
-                        <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 12 }}><p style={{ fontSize: 12, color: '#64748b', marginBottom: 10 }}>자주 검색되는 성분</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{['아스피린', '이부프로펜', '오메가3'].map(name => <button key={name} onClick={() => handleSearch(name)} style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 20, color: '#93c5fd', fontSize: 13 }}>{name}</button>)}</div></div>
+                        <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 12 }}><p style={{ fontSize: 12, color: '#64748b', marginBottom: 10 }}>자주 검색되는 성분</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{['아스피린', '와파린', '오메가3'].map(name => <button key={name} onClick={() => handleSearch(name)} style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 20, color: '#93c5fd', fontSize: 13 }}>{name}</button>)}</div></div>
                     </div>
                 )}
                 {ingredients.length > 0 && <div style={{ marginTop: 16, padding: 14, background: 'rgba(255,255,255,0.04)', borderRadius: 12 }}><h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>💊 추가된 성분 ({ingredients.length})</h3><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{ingredients.map((ing) => <span key={ing.original} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'rgba(16,185,129,0.15)', borderRadius: 20, fontSize: 14, color: '#6ee7b7' }}>✓ {ing.nameKo}<button onClick={() => setIngredients(p => p.filter(i => i.original !== ing.original))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, background: 'rgba(255,255,255,0.2)', borderRadius: '50%', color: 'inherit', fontSize: 14 }}>×</button></span>)}</div></div>}

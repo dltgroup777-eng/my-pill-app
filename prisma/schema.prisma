@@ -3,101 +3,32 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  profile   UserHealthProfile?
-  products  Product[]
-  scanLogs  ScanLog[]
-}
-
-model UserHealthProfile {
-  id                  String  @id @default(cuid())
-  userId              String  @unique
-  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name                String?
-  ageBand             String?
-  liverIssue          Boolean @default(false)
-  kidneyIssue         Boolean @default(false)
-  bleedingRisk        Boolean @default(false)
-  pregnancyLactation  Boolean @default(false)
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Product {
   id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   type        String   @default("medicine")
   dosageText  String?
+  ingredients String[]
+  userId      String
   createdAt   DateTime @default(now())
-  ingredients ProductIngredient[]
-}
-
-model ProductIngredient {
-  id                    String             @id @default(cuid())
-  productId             String
-  product               Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-  standardIngredientId  String
-  standardIngredient    StandardIngredient @relation(fields: [standardIngredientId], references: [id])
-  originalName          String?
-  amount                Float?
-  unit                  String?
-}
-
-model StandardIngredient {
-  id               String   @id @default(cuid())
-  code             String   @unique
-  nameKo           String
-  nameEn           String?
-  category         String?
-  therapeuticGroup String?
-  aliases          IngredientAlias[]
-  products         ProductIngredient[]
-  triggerRules     InteractionRule[] @relation("TriggerIngredient")
-  targetRules      InteractionRule[] @relation("TargetIngredient")
-}
-
-model IngredientAlias {
-  id                    String             @id @default(cuid())
-  standardIngredientId  String
-  standardIngredient    StandardIngredient @relation(fields: [standardIngredientId], references: [id], onDelete: Cascade)
-  aliasName             String
-  priority              Int                @default(1)
-}
-
-model InteractionRule {
-  id                   String             @id @default(cuid())
-  triggerIngredientId  String
-  triggerIngredient    StandardIngredient @relation("TriggerIngredient", fields: [triggerIngredientId], references: [id])
-  targetIngredientId   String?
-  targetIngredient     StandardIngredient? @relation("TargetIngredient", fields: [targetIngredientId], references: [id])
-  category             String             @default("ddi")
-  baseRisk             String             @default("warning")
-  conclusion           String
-  reason               String
-  action               String
-  evidenceUrl          String?
-  isActive             Boolean            @default(true)
-  elderlyWeight        Float              @default(1.0)
-  liverWeight          Float              @default(1.0)
-  kidneyWeight         Float              @default(1.0)
-  bleedingWeight       Float              @default(1.0)
-  pregnancyWeight      Float              @default(1.0)
 }
 
 model ScanLog {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  inputText     String?
-  resultJson    String
-  overallRisk   String
-  createdAt     DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  result    String
+  createdAt DateTime @default(now())
 }
