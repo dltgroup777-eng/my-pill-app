@@ -2,93 +2,236 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import styles from './scan.module.css';
 
-const DEV_MODE = true;
-const MOCK_SEARCH_RESULTS = [
+const MOCK_SEARCH = [
     { code: 'ASPIRIN', nameKo: '아스피린', nameEn: 'Aspirin', category: '해열진통제' },
     { code: 'IBUPROFEN', nameKo: '이부프로펜', nameEn: 'Ibuprofen', category: 'NSAID' },
     { code: 'ACETAMINOPHEN', nameKo: '아세트아미노펜', nameEn: 'Acetaminophen', category: '해열진통제' },
     { code: 'WARFARIN', nameKo: '와파린', nameEn: 'Warfarin', category: '항응고제' },
     { code: 'OMEGA3', nameKo: '오메가3', nameEn: 'Omega-3', category: '오메가지방산' },
-    { code: 'VITAMIN_D', nameKo: '비타민D', nameEn: 'Vitamin D', category: '비타민' },
 ];
-const MOCK_ANALYSIS_RESULT = { success: true, overallRisk: 'danger', results: [{ ruleId: 'rule-warfarin-aspirin', level: 'danger', category: 'ddi', triggerIngredient: { code: 'WARFARIN', nameKo: '와파린' }, targetIngredient: { code: 'ASPIRIN', nameKo: '아스피린' }, message: { conclusion: '심각한 출혈 위험 증가', reason: '두 약물 모두 혈액 응고를 억제하여 상승 효과 발생', action: '즉시 의사 또는 약사와 상담하세요' } }], matchedIngredients: [{ original: '아스피린', standardName: '아스피린' }], baselineIngredients: ['WARFARIN'], processingTime: 127 };
 
-interface SearchResult { code: string; nameKo: string; nameEn?: string; category?: string; }
-interface AddedIngredient { code: string; nameKo: string; original: string; }
+interface Ingredient { code: string; nameKo: string; original: string; }
 
 export default function ScanPage() {
     const router = useRouter();
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const debounceRef = useRef<NodeJS.Timeout>();
     const streamRef = useRef<MediaStream | null>(null);
 
     const [mode, setMode] = useState<'camera' | 'search'>('search');
-    const [ingredients, setIngredients] = useState<AddedIngredient[]>([]);
+    const [ingredients, setIngredients] = useState<Ingredient[]>([]);
     const [inputValue, setInputValue] = useState('');
-    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [searchResults, setSearchResults] = useState<typeof MOCK_SEARCH>([]);
     const [loading, setLoading] = useState(false);
     const [cameraActive, setCameraActive] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const [ocrLoading, setOcrLoading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [showResults, setShowResults] = useState(false);
-    const [permissionState, setPermissionState] = useState<'prompt' | 'granted' | 'denied'>('prompt');
 
-    useEffect(() => { if (typeof navigator !== 'undefined' && navigator.permissions) { navigator.permissions.query({ name: 'camera' as PermissionName }).then(status => { setPermissionState(status.state as 'prompt' | 'granted' | 'denied'); status.onchange = () => setPermissionState(status.state as 'prompt' | 'granted' | 'denied'); }).catch(() => { }); } }, []);
-
+    // 카메라 시작 - 표준 Web API 사용
     const startCamera = useCallback(async () => {
         setCameraError(null);
         try {
             if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+
+            // 표준 Web API - 모든 모바일 브라우저 지원
+            const constraints: MediaStreamConstraints = {
+                video: {
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                },
+                audio: false,
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             streamRef.current = stream;
-            if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.setAttribute('playsinline', 'true'); await videoRef.current.play(); setCameraActive(true); setPermissionState('granted'); }
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.setAttribute('playsinline', 'true');
+                videoRef.current.setAttribute('webkit-playsinline', 'true');
+                await videoRef.current.play();
+                setCameraActive(true);
+            }
         } catch (err) {
             const error = err as Error;
-            if (error.name === 'NotAllowedError') { setCameraError('카메라 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해주세요.'); setPermissionState('denied'); }
-            else if (error.name === 'NotFoundError') setCameraError('카메라를 찾을 수 없습니다.');
-            else setCameraError('카메라를 시작할 수 없습니다. 갤러리에서 이미지를 선택해주세요.');
+            console.error('Camera error:', error);
+            if (error.name === 'NotAllowedError') {
+                setCameraError('카메라 권한이 거부되었습니다.\n\n📱 설정 방법:\n1. 브라우저 주소창 왼쪽 🔒 아이콘 터치\n2. 카메라 권한을 "허용"으로 변경\n3. 페이지 새로고침');
+            } else if (error.name === 'NotFoundError') {
+                setCameraError('카메라를 찾을 수 없습니다.');
+            } else {
+                setCameraError('카메라를 시작할 수 없습니다.\n갤러리에서 이미지를 선택해주세요.');
+            }
         }
     }, []);
 
-    const stopCamera = useCallback(() => { if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; } if (videoRef.current) videoRef.current.srcObject = null; setCameraActive(false); }, []);
+    const stopCamera = useCallback(() => {
+        if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+        if (videoRef.current) videoRef.current.srcObject = null;
+        setCameraActive(false);
+    }, []);
+
     useEffect(() => { if (mode !== 'camera') stopCamera(); return () => stopCamera(); }, [mode, stopCamera]);
 
-    const capturePhoto = () => { if (!videoRef.current || !canvasRef.current) return; const video = videoRef.current; const canvas = canvasRef.current; const ctx = canvas.getContext('2d'); if (!ctx) return; canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0); const imageData = canvas.toDataURL('image/jpeg', 0.9); setPreviewImage(imageData); stopCamera(); processImage(imageData); };
+    const capturePhoto = () => {
+        if (!videoRef.current || !canvasRef.current) return;
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d')?.drawImage(video, 0, 0);
+        setPreviewImage(canvas.toDataURL('image/jpeg', 0.9));
+        stopCamera();
+        // Mock OCR 처리
+        setOcrLoading(true);
+        setTimeout(() => {
+            setIngredients([{ code: 'ASPIRIN', nameKo: '아스피린', original: '아스피린 500mg' }]);
+            setOcrLoading(false);
+        }, 2000);
+    };
 
-    const processImage = async (imageData: string) => { setOcrLoading(true); if (DEV_MODE) { setTimeout(() => { setIngredients([{ code: 'ASPIRIN', nameKo: '아스피린', original: '아스피린 500mg' }]); setOcrLoading(false); }, 2000); return; } setOcrLoading(false); };
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            setPreviewImage(ev.target?.result as string);
+            setOcrLoading(true);
+            setTimeout(() => {
+                setIngredients([{ code: 'ASPIRIN', nameKo: '아스피린', original: '아스피린 500mg' }]);
+                setOcrLoading(false);
+            }, 2000);
+        };
+        reader.readAsDataURL(file);
+    };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (ev) => { const imageData = ev.target?.result as string; setPreviewImage(imageData); processImage(imageData); }; reader.readAsDataURL(file); };
+    const handleSearch = (query: string) => {
+        setInputValue(query);
+        if (query.length < 1) { setSearchResults([]); return; }
+        setSearchResults(MOCK_SEARCH.filter(r => r.nameKo.includes(query) || r.nameEn?.toLowerCase().includes(query.toLowerCase())));
+    };
 
-    const handleSearch = useCallback((query: string) => { if (query.length < 1) { setSearchResults([]); setShowResults(false); return; } const filtered = MOCK_SEARCH_RESULTS.filter(r => r.nameKo.includes(query) || r.nameEn?.toLowerCase().includes(query.toLowerCase())); setSearchResults(filtered); setShowResults(true); }, []);
+    const selectIngredient = (result: typeof MOCK_SEARCH[0]) => {
+        if (!ingredients.find(i => i.code === result.code)) setIngredients(prev => [...prev, { code: result.code, nameKo: result.nameKo, original: result.nameKo }]);
+        setInputValue('');
+        setSearchResults([]);
+    };
 
-    const onInputChange = (value: string) => { setInputValue(value); if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = setTimeout(() => handleSearch(value), 300); };
-    const selectIngredient = (result: SearchResult) => { if (!ingredients.find(i => i.code === result.code)) setIngredients(prev => [...prev, { code: result.code, nameKo: result.nameKo, original: result.nameKo }]); setInputValue(''); setSearchResults([]); setShowResults(false); };
-    const removeIngredient = (original: string) => setIngredients(prev => prev.filter(i => i.original !== original));
-
-    const handleAnalyze = async () => { if (ingredients.length === 0) return; setLoading(true); if (DEV_MODE) { setTimeout(() => { const hasAspirin = ingredients.some(i => i.code === 'ASPIRIN'); if (hasAspirin) localStorage.setItem('analysisResult', JSON.stringify(MOCK_ANALYSIS_RESULT)); else localStorage.setItem('analysisResult', JSON.stringify({ ...MOCK_ANALYSIS_RESULT, overallRisk: 'notice', results: [], matchedIngredients: ingredients.map(i => ({ original: i.original, standardName: i.nameKo })) })); router.push('/results'); }, 1000); return; } setLoading(false); };
+    const handleAnalyze = () => {
+        if (ingredients.length === 0) return;
+        setLoading(true);
+        const hasAspirin = ingredients.some(i => i.code === 'ASPIRIN');
+        const result = hasAspirin ? { overallRisk: 'danger', results: [{ ruleId: 'rule-1', level: 'danger', category: 'ddi', triggerIngredient: { code: 'WARFARIN', nameKo: '와파린' }, targetIngredient: { code: 'ASPIRIN', nameKo: '아스피린' }, message: { conclusion: '심각한 출혈 위험 증가', reason: '두 약물 모두 혈액 응고를 억제하여 상승 효과 발생', action: '즉시 의사 또는 약사와 상담하세요' } }], matchedIngredients: ingredients.map(i => ({ original: i.original, standardName: i.nameKo })), baselineIngredients: ['WARFARIN'] } : { overallRisk: 'notice', results: [], matchedIngredients: ingredients.map(i => ({ original: i.original, standardName: i.nameKo })), baselineIngredients: ['WARFARIN'] };
+        localStorage.setItem('analysisResult', JSON.stringify(result));
+        router.push('/results');
+    };
 
     return (
-        <div className={styles.container}>
-            <header className={styles.header}><h1>📷 약물 스캔</h1><p>새로 복용할 약을 분석합니다</p></header>
-            <div className={styles.tabs}><button className={`${styles.tab} ${mode === 'camera' ? styles.active : ''}`} onClick={() => setMode('camera')}>📷 카메라</button><button className={`${styles.tab} ${mode === 'search' ? styles.active : ''}`} onClick={() => setMode('search')}>🔍 검색</button></div>
-            <div className={styles.content}>
-                {mode === 'camera' && <div className={styles.cameraSection}>
-                    {cameraError ? <div className={styles.cameraError}><span className={styles.errorIcon}>📵</span><p>{cameraError}</p>{permissionState === 'denied' && <div className={styles.permissionGuide}><p>권한 설정 방법:</p><ol><li>브라우저 주소창 왼쪽 🔒 아이콘 터치</li><li>카메라 권한 허용으로 변경</li><li>페이지 새로고침</li></ol></div>}<button onClick={() => fileInputRef.current?.click()} className={styles.galleryBtn}>📁 갤러리에서 선택</button></div>
-                        : cameraActive ? <div className={styles.cameraContainer}><video ref={videoRef} className={styles.video} playsInline muted autoPlay /><canvas ref={canvasRef} style={{ display: 'none' }} /><div className={styles.cameraGuide}><div className={styles.guideFrame}><div className={styles.corner} data-pos="tl"></div><div className={styles.corner} data-pos="tr"></div><div className={styles.corner} data-pos="bl"></div><div className={styles.corner} data-pos="br"></div></div><p className={styles.guideText}>약 성분명을 프레임 안에 맞춰주세요</p></div><div className={styles.cameraControls}><button className={styles.controlBtn} onClick={stopCamera}>✕</button><button className={styles.captureBtn} onClick={capturePhoto}><span></span></button><button className={styles.controlBtn} onClick={() => fileInputRef.current?.click()}>📁</button></div></div>
-                            : previewImage ? <div className={styles.previewContainer}><img src={previewImage} alt="Preview" className={styles.previewImage} />{ocrLoading && <div className={styles.ocrOverlay}><div className={styles.spinner}></div><p>성분 인식 중...</p></div>}<button className={styles.retakeBtn} onClick={() => { setPreviewImage(null); startCamera(); }} disabled={ocrLoading}>📷 다시 촬영</button></div>
-                                : <div className={styles.cameraPlaceholder}><button className={styles.startCameraBtn} onClick={startCamera}><span className={styles.cameraIconLarge}>📷</span><strong>카메라 시작하기</strong><span>터치하여 카메라 권한 허용</span></button><button className={styles.galleryOption} onClick={() => fileInputRef.current?.click()}>📁 갤러리에서 선택</button></div>}
-                    <input type="file" ref={fileInputRef} accept="image/*" capture="environment" onChange={handleFileUpload} className={styles.hiddenInput} />
-                </div>}
-                {mode === 'search' && <div className={styles.searchSection}><div className={styles.searchBox}><span className={styles.searchIcon}>🔍</span><input type="text" className={styles.searchInput} placeholder="약물 또는 성분명 검색..." value={inputValue} onChange={(e) => onInputChange(e.target.value)} /></div>{showResults && searchResults.length > 0 && <div className={styles.searchResults}>{searchResults.map((r) => <button key={r.code} className={styles.resultItem} onClick={() => selectIngredient(r)}><div className={styles.resultMain}><span className={styles.resultName}>{r.nameKo}</span><span className={styles.resultNameEn}>{r.nameEn}</span></div><span className={styles.resultCategory}>{r.category}</span></button>)}</div>}<div className={styles.quickSelect}><p>자주 검색되는 성분</p><div className={styles.quickBtns}>{['아스피린', '타이레놀', '이부프로펜', '오메가3', '비타민D'].map(name => <button key={name} onClick={() => onInputChange(name)}>{name}</button>)}</div></div></div>}
-                {ingredients.length > 0 && <div className={styles.ingredientList}><h3>💊 추가된 성분 ({ingredients.length})</h3><div className={styles.tags}>{ingredients.map((ing) => <span key={ing.original} className={`${styles.tag} ${ing.code ? styles.matched : ''}`}>{ing.code ? '✓' : '?'} {ing.nameKo}<button onClick={() => removeIngredient(ing.original)}>×</button></span>)}</div></div>}
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, #0a1628 0%, #1a2744 100%)', color: '#fff', paddingBottom: 80 }}>
+            <header style={{ textAlign: 'center', padding: '20px 16px 14px' }}><h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>📷 약물 스캔</h1><p style={{ fontSize: 13, color: '#94a3b8' }}>새로 복용할 약을 분석합니다</p></header>
+            <div style={{ display: 'flex', gap: 8, padding: '0 16px 14px' }}>
+                <button onClick={() => setMode('camera')} style={{ flex: 1, padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 600, background: mode === 'camera' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'rgba(255,255,255,0.08)', color: mode === 'camera' ? '#fff' : '#94a3b8' }}>📷 카메라</button>
+                <button onClick={() => setMode('search')} style={{ flex: 1, padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 600, background: mode === 'search' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'rgba(255,255,255,0.08)', color: mode === 'search' ? '#fff' : '#94a3b8' }}>🔍 검색</button>
             </div>
-            <div className={styles.bottomActions}><button className={`${styles.analyzeBtn} ${ingredients.length === 0 ? styles.disabled : ''}`} onClick={handleAnalyze} disabled={ingredients.length === 0 || loading}>{loading ? '분석 중...' : `🔍 안전성 분석 ${ingredients.length > 0 ? `(${ingredients.length})` : ''}`}</button></div>
-            <nav className={styles.bottomNav}><Link href="/home" className={styles.navItem}><span>🏠</span><span>홈</span></Link><Link href="/scan" className={`${styles.navItem} ${styles.active}`}><span>📷</span><span>스캔</span></Link><Link href="/products" className={styles.navItem}><span>💊</span><span>약상자</span></Link></nav>
+            <div style={{ flex: 1, padding: '0 16px', overflowY: 'auto' }}>
+                {mode === 'camera' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {cameraError ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', textAlign: 'center', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16 }}>
+                                <span style={{ fontSize: 48, marginBottom: 12 }}>📵</span>
+                                <p style={{ fontSize: 14, color: '#f87171', marginBottom: 16, whiteSpace: 'pre-line' }}>{cameraError}</p>
+                                <button onClick={() => fileInputRef.current?.click()} style={{ padding: '14px 24px', background: '#3b82f6', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 600 }}>📁 갤러리에서 선택</button>
+                            </div>
+                        ) : cameraActive ? (
+                            <div style={{ position: 'relative', width: '100%', aspectRatio: '3/4', background: '#000', borderRadius: 16, overflow: 'hidden' }}>
+                                <video ref={videoRef} playsInline muted autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <canvas ref={canvasRef} style={{ display: 'none' }} />
+                                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                                    <div style={{ position: 'relative', width: '85%', height: '25%', border: '2px solid rgba(59,130,246,0.5)', borderRadius: 8 }}>
+                                        <div style={{ position: 'absolute', top: -2, left: -2, width: 20, height: 20, borderTop: '3px solid #3b82f6', borderLeft: '3px solid #3b82f6', borderTopLeftRadius: 8 }} />
+                                        <div style={{ position: 'absolute', top: -2, right: -2, width: 20, height: 20, borderTop: '3px solid #3b82f6', borderRight: '3px solid #3b82f6', borderTopRightRadius: 8 }} />
+                                        <div style={{ position: 'absolute', bottom: -2, left: -2, width: 20, height: 20, borderBottom: '3px solid #3b82f6', borderLeft: '3px solid #3b82f6', borderBottomLeftRadius: 8 }} />
+                                        <div style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderBottom: '3px solid #3b82f6', borderRight: '3px solid #3b82f6', borderBottomRightRadius: 8 }} />
+                                    </div>
+                                    <p style={{ marginTop: 16, fontSize: 14, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>약 성분명을 프레임 안에 맞춰주세요</p>
+                                </div>
+                                <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 32 }}>
+                                    <button onClick={stopCamera} style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 20 }}>✕</button>
+                                    <button onClick={capturePhoto} style={{ width: 72, height: 72, borderRadius: '50%', border: '4px solid #fff', background: 'transparent', padding: 4 }}><span style={{ display: 'block', width: '100%', height: '100%', borderRadius: '50%', background: '#fff' }} /></button>
+                                    <button onClick={() => fileInputRef.current?.click()} style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 20 }}>📁</button>
+                                </div>
+                            </div>
+                        ) : previewImage ? (
+                            <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden' }}>
+                                <img src={previewImage} alt="Preview" style={{ width: '100%', display: 'block' }} />
+                                {ocrLoading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}><div style={{ width: 40, height: 40, border: '3px solid rgba(255,255,255,0.2)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /><p>성분 인식 중...</p><style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style></div>}
+                                <button onClick={() => { setPreviewImage(null); startCamera(); }} disabled={ocrLoading} style={{ marginTop: 12, padding: '14px 24px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 600, width: '100%' }}>📷 다시 촬영</button>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                <button onClick={startCamera} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, aspectRatio: '3/4', background: 'rgba(59,130,246,0.08)', border: '2px dashed rgba(59,130,246,0.4)', borderRadius: 16 }}>
+                                    <span style={{ fontSize: 64 }}>📷</span>
+                                    <strong style={{ fontSize: 17, color: '#fff' }}>카메라 시작하기</strong>
+                                    <span style={{ fontSize: 13, color: '#64748b' }}>터치하여 카메라 권한 허용</span>
+                                </button>
+                                <button onClick={() => fileInputRef.current?.click()} style={{ padding: 14, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#94a3b8', fontSize: 15 }}>📁 갤러리에서 선택</button>
+                            </div>
+                        )}
+                        <input type="file" ref={fileInputRef} accept="image/*" capture="environment" onChange={handleFileUpload} style={{ display: 'none' }} />
+                    </div>
+                )}
+                {mode === 'search' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 14 }}>
+                            <span style={{ fontSize: 18 }}>🔍</span>
+                            <input type="text" placeholder="약물 또는 성분명 검색..." value={inputValue} onChange={(e) => handleSearch(e.target.value)} style={{ flex: 1, border: 'none', background: 'none', outline: 'none', fontSize: 16, color: '#fff' }} />
+                        </div>
+                        {searchResults.length > 0 && (
+                            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden', maxHeight: 260, overflowY: 'auto' }}>
+                                {searchResults.map((r) => (
+                                    <button key={r.code} onClick={() => selectIngredient(r)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '14px 16px', background: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'left' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>{r.nameKo}</span><span style={{ fontSize: 12, color: '#64748b' }}>{r.nameEn}</span></div>
+                                        <span style={{ fontSize: 11, padding: '4px 8px', background: 'rgba(59,130,246,0.15)', borderRadius: 4, color: '#93c5fd' }}>{r.category}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 12 }}>
+                            <p style={{ fontSize: 12, color: '#64748b', marginBottom: 10 }}>자주 검색되는 성분</p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                {['아스피린', '타이레놀', '이부프로펜', '오메가3'].map(name => <button key={name} onClick={() => handleSearch(name)} style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 20, color: '#93c5fd', fontSize: 13 }}>{name}</button>)}
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {ingredients.length > 0 && (
+                    <div style={{ marginTop: 16, padding: 14, background: 'rgba(255,255,255,0.04)', borderRadius: 12 }}>
+                        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>💊 추가된 성분 ({ingredients.length})</h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {ingredients.map((ing) => (
+                                <span key={ing.original} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'rgba(16,185,129,0.15)', borderRadius: 20, fontSize: 14, color: '#6ee7b7' }}>
+                                    ✓ {ing.nameKo}
+                                    <button onClick={() => setIngredients(prev => prev.filter(i => i.original !== ing.original))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, background: 'rgba(255,255,255,0.2)', borderRadius: '50%', color: 'inherit', fontSize: 14 }}>×</button>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+            <div style={{ padding: 16, paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+                <button onClick={handleAnalyze} disabled={ingredients.length === 0 || loading} style={{ width: '100%', padding: 18, background: ingredients.length === 0 ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: 14, color: ingredients.length === 0 ? '#64748b' : '#fff', fontSize: 17, fontWeight: 700 }}>{loading ? '분석 중...' : `🔍 안전성 분석 ${ingredients.length > 0 ? `(${ingredients.length})` : ''}`}</button>
+            </div>
+            <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px 0', paddingBottom: 'max(8px, env(safe-area-inset-bottom))', zIndex: 100 }}>
+                {[{ href: '/home', icon: '🏠', label: '홈' }, { href: '/scan', icon: '📷', label: '스캔', active: true }, { href: '/products', icon: '💊', label: '약상자' }].map((item) => (
+                    <Link key={item.href} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 0', color: item.active ? '#3b82f6' : '#64748b', fontSize: 11 }}>
+                        <span style={{ fontSize: 22 }}>{item.icon}</span><span>{item.label}</span>
+                    </Link>
+                ))}
+            </nav>
         </div>
     );
 }

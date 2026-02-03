@@ -1,53 +1,66 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import styles from './home.module.css';
 
-const DEV_MODE = true;
 const MOCK_PRODUCTS = [{ id: '1', name: '쿠마딘 (와파린)', type: 'medicine' }, { id: '2', name: '오메가3', type: 'supplement' }];
 
-interface BeforeInstallPromptEvent extends Event { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>; }
-
 export default function HomePage() {
-    const [products, setProducts] = useState<{ id: string; name: string; type: string }[]>([]);
-    const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState('사용자');
-    const [showInstallBanner, setShowInstallBanner] = useState(false);
-    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [products, setProducts] = useState(MOCK_PRODUCTS);
 
     useEffect(() => {
-        const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e as BeforeInstallPromptEvent); setShowInstallBanner(true); };
-        window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
+        const user = localStorage.getItem('user');
+        if (user) setUserName(JSON.parse(user).name || '사용자');
     }, []);
-
-    useEffect(() => {
-        if (DEV_MODE) {
-            const user = localStorage.getItem('user');
-            if (user) setUserName(JSON.parse(user).name || '사용자');
-            setProducts(MOCK_PRODUCTS);
-            setLoading(false);
-            return;
-        }
-        const token = localStorage.getItem('accessToken');
-        if (!token) { window.location.href = '/login'; return; }
-        fetch('/api/products', { headers: { Authorization: `Bearer ${token}` } })
-            .then(res => res.json()).then(data => setProducts(data.products || []))
-            .catch(console.error).finally(() => setLoading(false));
-    }, []);
-
-    const handleInstall = async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); setShowInstallBanner(false); setDeferredPrompt(null); };
-
-    if (loading) return <div className={styles.loading}><div className={styles.spinner}></div></div>;
 
     return (
-        <div className={styles.container}>
-            {showInstallBanner && <div className={styles.installBanner}><div className={styles.installContent}><span>📱</span><div><strong>홈 화면에 추가</strong><p>앱처럼 빠르게 사용!</p></div></div><div className={styles.installActions}><button onClick={() => setShowInstallBanner(false)}>나중에</button><button className={styles.installBtn} onClick={handleInstall}>설치</button></div></div>}
-            <header className={styles.header}><div className={styles.headerTop}><div className={styles.greeting}><h1>안녕하세요 👋</h1><p>{userName}님, 오늘도 건강하세요!</p></div><Link href="/profile" className={styles.profileBtn}>👤</Link></div></header>
-            <section className={styles.mainSection}><Link href="/scan" className={styles.mainCard}><div className={styles.mainCardContent}><div className={styles.mainIcon}>📷</div><div className={styles.mainText}><h2>약물 안전 스캔</h2><p>새로 먹을 약의 안전성을 확인하세요</p></div></div><div className={styles.mainArrow}>→</div></Link></section>
-            <section className={styles.quickSection}><div className={styles.quickGrid}><Link href="/scan" className={styles.quickItem}><span className={styles.quickIcon}>📷</span><span>사진 스캔</span></Link><Link href="/products/add" className={styles.quickItem}><span className={styles.quickIcon}>➕</span><span>약 추가</span></Link><Link href="/products" className={styles.quickItem}><span className={styles.quickIcon}>💊</span><span>내 약상자</span></Link><Link href="/results" className={styles.quickItem}><span className={styles.quickIcon}>📊</span><span>분석 결과</span></Link></div></section>
-            {products.length > 0 && <section className={styles.productsSection}><div className={styles.sectionHeader}><h3>💊 복용 중인 약</h3><Link href="/products" className={styles.seeAll}>전체보기</Link></div><div className={styles.productChips}>{products.slice(0, 3).map((p) => <span key={p.id} className={styles.productChip}>{p.type === 'medicine' ? '💊' : '🌿'} {p.name}</span>)}{products.length > 3 && <span className={styles.moreChip}>+{products.length - 3}</span>}</div></section>}
-            <nav className={styles.bottomNav}><Link href="/home" className={`${styles.navItem} ${styles.active}`}><span>🏠</span><span>홈</span></Link><Link href="/scan" className={styles.navItem}><span>📷</span><span>스캔</span></Link><Link href="/products" className={styles.navItem}><span>💊</span><span>약상자</span></Link></nav>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, #0a1628 0%, #1a2744 100%)', color: '#fff', paddingBottom: 80 }}>
+            <header style={{ padding: '20px 16px 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div><h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>안녕하세요 👋</h1><p style={{ fontSize: 14, color: '#94a3b8' }}>{userName}님, 오늘도 건강하세요!</p></div>
+                    <Link href="/profile" style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 20 }}>👤</Link>
+                </div>
+            </header>
+
+            <section style={{ padding: '0 16px', marginBottom: 20 }}>
+                <Link href="/scan" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 20, background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', borderRadius: 16, boxShadow: '0 8px 24px rgba(59, 130, 246, 0.25)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{ width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.2)', borderRadius: 14, fontSize: 26 }}>📷</div>
+                        <div><h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 2 }}>약물 안전 스캔</h2><p style={{ fontSize: 13, opacity: 0.9 }}>새로 먹을 약의 안전성을 확인하세요</p></div>
+                    </div>
+                    <span style={{ fontSize: 22, opacity: 0.8 }}>→</span>
+                </Link>
+            </section>
+
+            <section style={{ padding: '0 16px', marginBottom: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    {[{ href: '/scan', icon: '📷', label: '사진 스캔' }, { href: '/products/add', icon: '➕', label: '약 추가' }, { href: '/products', icon: '💊', label: '내 약상자' }, { href: '/results', icon: '📊', label: '분석 결과' }].map((item) => (
+                        <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+                            <span style={{ fontSize: 24 }}>{item.icon}</span>
+                            <span style={{ fontSize: 11, color: '#94a3b8' }}>{item.label}</span>
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+            {products.length > 0 && (
+                <section style={{ padding: '0 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}><h3 style={{ fontSize: 14, fontWeight: 600, color: '#94a3b8' }}>💊 복용 중인 약</h3><Link href="/products" style={{ fontSize: 12, color: '#3b82f6' }}>전체보기</Link></div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {products.slice(0, 3).map((p) => <span key={p.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '8px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, fontSize: 13, color: '#e2e8f0' }}>{p.type === 'medicine' ? '💊' : '🌿'} {p.name}</span>)}
+                        {products.length > 3 && <span style={{ padding: '8px 12px', background: 'rgba(59,130,246,0.15)', borderRadius: 20, fontSize: 13, color: '#93c5fd' }}>+{products.length - 3}</span>}
+                    </div>
+                </section>
+            )}
+
+            <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px 0', paddingBottom: 'max(8px, env(safe-area-inset-bottom))', zIndex: 100 }}>
+                {[{ href: '/home', icon: '🏠', label: '홈', active: true }, { href: '/scan', icon: '📷', label: '스캔' }, { href: '/products', icon: '💊', label: '약상자' }].map((item) => (
+                    <Link key={item.href} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 0', color: item.active ? '#3b82f6' : '#64748b', fontSize: 11 }}>
+                        <span style={{ fontSize: 22 }}>{item.icon}</span>
+                        <span>{item.label}</span>
+                    </Link>
+                ))}
+            </nav>
         </div>
     );
 }

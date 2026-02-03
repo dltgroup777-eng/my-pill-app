@@ -1,109 +1,54 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import styles from './profile.module.css';
-
-interface Profile {
-    name: string;
-    ageBand: string;
-    liverIssue: boolean;
-    kidneyIssue: boolean;
-    bleedingRisk: boolean;
-    pregnancyLactation: boolean;
-}
-
-interface User {
-    email: string;
-    premium: boolean;
-}
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
     const router = useRouter();
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<{ name: string; email: string; isGuest: boolean } | null>(null);
 
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
-        fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
-            .then(res => res.json())
-            .then(data => {
-                setProfile(data.profile);
-                setUser(data.user);
-            })
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, [router]);
+        const saved = localStorage.getItem('user');
+        if (saved) setUser(JSON.parse(saved));
+    }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        router.push('/');
-    };
-
-    if (loading) return <div className={styles.loading}>로딩 중...</div>;
-
-    const ageBandLabel: Record<string, string> = {
-        '20s': '20대', '30s': '30대', '40s': '40대', '50s': '50대', '60+': '60대 이상'
+        localStorage.removeItem('user');
+        router.push('/login');
     };
 
     return (
-        <div className={styles.container}>
-            <header className={styles.header}>
-                <h1>👤 프로필</h1>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, #0a1628 0%, #1a2744 100%)', color: '#fff' }}>
+            <header style={{ padding: '20px 16px 14px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <Link href="/home" style={{ color: '#94a3b8', fontSize: 15 }}>← 뒤로</Link>
+                <h1 style={{ fontSize: 24, fontWeight: 700, marginTop: 8 }}>👤 프로필</h1>
             </header>
 
-            <div className={styles.content}>
-                {profile && (
-                    <div className={styles.card}>
-                        <h2>{profile.name}</h2>
-                        {user?.premium && <span className={styles.badge}>PREMIUM</span>}
-                        <div className={styles.info}>
-                            <p><strong>연령대:</strong> {ageBandLabel[profile.ageBand] || profile.ageBand}</p>
-                            <p><strong>이메일:</strong> {user?.email}</p>
-                        </div>
-                        <div className={styles.conditions}>
-                            <h3>건강 상태</h3>
-                            <ul>
-                                <li>간 질환: {profile.liverIssue ? '있음' : '없음'}</li>
-                                <li>신장 질환: {profile.kidneyIssue ? '있음' : '없음'}</li>
-                                <li>출혈 위험: {profile.bleedingRisk ? '있음' : '없음'}</li>
-                                <li>임신/수유: {profile.pregnancyLactation ? '해당' : '해당없음'}</li>
-                            </ul>
-                        </div>
-                        <Link href="/survey" className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }}>
-                            건강 정보 수정
-                        </Link>
+            <section style={{ padding: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, marginBottom: 20 }}>
+                    <div style={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', borderRadius: '50%', fontSize: 28 }}>👤</div>
+                    <div>
+                        <h2 style={{ fontSize: 20, fontWeight: 700 }}>{user?.name || '사용자'}</h2>
+                        <p style={{ fontSize: 14, color: '#94a3b8' }}>{user?.email || ''}</p>
+                        {user?.isGuest && <span style={{ display: 'inline-block', marginTop: 4, padding: '4px 8px', background: 'rgba(249,115,22,0.2)', borderRadius: 4, fontSize: 12, color: '#fdba74' }}>게스트 계정</span>}
                     </div>
-                )}
+                </div>
 
-                {!user?.premium && (
-                    <Link href="/premium" className={styles.premiumBanner}>
-                        <span>⭐</span>
-                        <div>
-                            <strong>Premium으로 업그레이드</strong>
-                            <p>맞춤 분석, PDF 리포트 등</p>
-                        </div>
-                    </Link>
-                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden' }}>
+                    {[{ label: '건강 프로필 설정', icon: '❤️' }, { label: '알림 설정', icon: '🔔' }, { label: '앱 정보', icon: 'ℹ️' }].map((item, i) => (
+                        <button key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, background: 'none', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.06)' : 'none', color: '#fff', textAlign: 'left' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><span style={{ fontSize: 20 }}>{item.icon}</span><span style={{ fontSize: 15 }}>{item.label}</span></span>
+                            <span style={{ color: '#64748b' }}>→</span>
+                        </button>
+                    ))}
+                </div>
+            </section>
 
-                <button className={styles.logoutBtn} onClick={handleLogout}>
-                    로그아웃
-                </button>
+            <div style={{ flex: 1 }} />
+
+            <div style={{ padding: 16, paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+                <button onClick={handleLogout} style={{ width: '100%', padding: 16, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 14, color: '#f87171', fontSize: 15, fontWeight: 600 }}>🚪 로그아웃</button>
             </div>
-
-            <nav className={styles.bottomNav}>
-                <Link href="/home" className={styles.navItem}><span>🏠</span><span>홈</span></Link>
-                <Link href="/products" className={styles.navItem}><span>💊</span><span>복용목록</span></Link>
-                <Link href="/scan" className={styles.navItem}><span>📷</span><span>스캔</span></Link>
-                <Link href="/profile" className={`${styles.navItem} ${styles.active}`}><span>👤</span><span>프로필</span></Link>
-            </nav>
         </div>
     );
 }

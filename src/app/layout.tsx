@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
-    title: '복용약 안전 체커 | 약물 상호작용 분석',
+    title: '복용약 안전 체커',
     description: '약물 상호작용을 분석하여 안전한 복용을 도와드립니다',
     manifest: '/manifest.json',
-    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: '약안전' },
 };
 
 export const viewport: Viewport = {
@@ -22,14 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="ko">
             <head>
                 <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
                 <meta name="mobile-web-app-capable" content="yes" />
-                <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
+                <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
             </head>
-            <body>
-                {children}
-                <ServiceWorkerRegistration />
-            </body>
+            <body>{children}</body>
         </html>
     );
 }

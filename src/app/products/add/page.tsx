@@ -1,269 +1,88 @@
 'use client';
-import { useState, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './add.module.css';
+import Link from 'next/link';
 
-interface SearchResult {
-    code: string;
-    nameKo: string;
-    nameEn?: string;
-    category?: string;
-}
-
-interface SelectedIngredient {
-    code: string;
-    nameKo: string;
-    originalName: string;
-}
+const MOCK_SEARCH = [
+    { code: 'ASPIRIN', nameKo: '아스피린', category: '해열진통제' },
+    { code: 'IBUPROFEN', nameKo: '이부프로펜', category: 'NSAID' },
+    { code: 'ACETAMINOPHEN', nameKo: '아세트아미노펜', category: '해열진통제' },
+    { code: 'OMEGA3', nameKo: '오메가3', category: '오메가지방산' },
+    { code: 'VITAMIN_D', nameKo: '비타민 D', category: '비타민' },
+];
 
 export default function AddProductPage() {
     const router = useRouter();
-    const debounceRef = useRef<NodeJS.Timeout>();
+    const [form, setForm] = useState({ name: '', type: 'medicine', dosageText: '' });
+    const [ingredients, setIngredients] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<typeof MOCK_SEARCH>([]);
 
-    const [name, setName] = useState('');
-    const [type, setType] = useState<'medicine' | 'supplement'>('supplement');
-    const [ingredients, setIngredients] = useState<SelectedIngredient[]>([]);
-    const [inputValue, setInputValue] = useState('');
-    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-    const [showResults, setShowResults] = useState(false);
-    const [loading, setLoading] = useState(false);
-
-    // 자동완성 검색
-    const handleSearch = useCallback(async (query: string) => {
-        if (query.length < 1) {
-            setSearchResults([]);
-            setShowResults(false);
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`/api/scan?q=${encodeURIComponent(query)}`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            const data = await res.json();
-            setSearchResults(data.results || []);
-            setShowResults(true);
-        } catch (error) {
-            console.error('Search error:', error);
-        }
-    }, []);
-
-    const onInputChange = (value: string) => {
-        setInputValue(value);
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
-        debounceRef.current = setTimeout(() => {
-            handleSearch(value);
-        }, 300);
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        if (query.length < 1) { setSearchResults([]); return; }
+        setSearchResults(MOCK_SEARCH.filter(r => r.nameKo.includes(query)));
     };
 
-    const selectIngredient = (result: SearchResult) => {
-        if (!ingredients.find(i => i.code === result.code)) {
-            setIngredients(prev => [...prev, {
-                code: result.code,
-                nameKo: result.nameKo,
-                originalName: result.nameKo,
-            }]);
-        }
-        setInputValue('');
+    const addIngredient = (name: string) => {
+        if (!ingredients.includes(name)) setIngredients(prev => [...prev, name]);
+        setSearchQuery('');
         setSearchResults([]);
-        setShowResults(false);
     };
 
-    const addManualIngredient = () => {
-        if (inputValue.trim() && !ingredients.find(i => i.originalName === inputValue.trim())) {
-            setIngredients(prev => [...prev, {
-                code: '',
-                nameKo: inputValue.trim(),
-                originalName: inputValue.trim(),
-            }]);
-            setInputValue('');
-            setShowResults(false);
-        }
-    };
-
-    const removeIngredient = (originalName: string) => {
-        setIngredients(prev => prev.filter(i => i.originalName !== originalName));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
-
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch('/api/products', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    name,
-                    type,
-                    ingredients: ingredients.map(ing => ({ standardName: ing.nameKo })),
-                }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.error || '등록 실패');
-
-            alert(data.message || '제품이 등록되었습니다!');
-            router.push('/products');
-        } catch (error) {
-            console.error(error);
-            alert('제품 등록에 실패했습니다.');
-        } finally {
-            setLoading(false);
-        }
+        if (!form.name) return;
+        alert('✅ 약물이 추가되었습니다!');
+        router.push('/products');
     };
 
     return (
-        <div className={styles.container}>
-            <header className={styles.header}>
-                <button className={styles.backBtn} onClick={() => router.back()}>
-                    ← 뒤로
-                </button>
-                <h1>💊 내 약상자에 추가</h1>
-                <p>상시 복용 중인 약/영양제를 등록하세요</p>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, #0a1628 0%, #1a2744 100%)', color: '#fff' }}>
+            <header style={{ padding: '20px 16px 14px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <Link href="/products" style={{ color: '#94a3b8', fontSize: 15 }}>← 뒤로</Link>
+                <h1 style={{ fontSize: 24, fontWeight: 700, marginTop: 8 }}>➕ 약물 추가</h1>
             </header>
 
-            <form onSubmit={handleSubmit} className={styles.form}>
-                {/* 제품명 */}
-                <div className={styles.field}>
-                    <label>제품명 *</label>
-                    <input
-                        type="text"
-                        className={styles.input}
-                        placeholder="예: 종합비타민, 타이레놀"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                    />
+            <form onSubmit={handleSubmit} style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 16, gap: 20 }}>
+                <div>
+                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>약물 이름 *</label>
+                    <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="예: 타이레놀, 오메가3" required style={{ width: '100%', padding: 16, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, fontSize: 16, color: '#fff', outline: 'none' }} />
                 </div>
 
-                {/* 종류 선택 */}
-                <div className={styles.field}>
-                    <label>종류</label>
-                    <div className={styles.typeButtons}>
-                        <button
-                            type="button"
-                            className={`${styles.typeBtn} ${type === 'supplement' ? styles.active : ''}`}
-                            onClick={() => setType('supplement')}
-                        >
-                            🌿 영양제/보충제
-                        </button>
-                        <button
-                            type="button"
-                            className={`${styles.typeBtn} ${type === 'medicine' ? styles.active : ''}`}
-                            onClick={() => setType('medicine')}
-                        >
-                            💊 의약품
-                        </button>
+                <div>
+                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>종류</label>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        {[{ value: 'medicine', label: '💊 의약품' }, { value: 'supplement', label: '🌿 영양제' }].map(opt => (
+                            <button key={opt.value} type="button" onClick={() => setForm({ ...form, type: opt.value })} style={{ flex: 1, padding: 14, background: form.type === opt.value ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'rgba(255,255,255,0.08)', border: form.type === opt.value ? 'none' : '1px solid rgba(255,255,255,0.15)', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 600 }}>{opt.label}</button>
+                        ))}
                     </div>
                 </div>
 
-                {/* 성분 검색 */}
-                <div className={styles.field}>
-                    <label>성분 검색</label>
-                    <div className={styles.searchBox}>
-                        <span className={styles.searchIcon}>🔍</span>
-                        <input
-                            type="text"
-                            className={styles.searchInput}
-                            placeholder="성분명 검색... (예: 아스피린)"
-                            value={inputValue}
-                            onChange={(e) => onInputChange(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addManualIngredient())}
-                        />
-                        {inputValue && (
-                            <button
-                                type="button"
-                                className={styles.addBtn}
-                                onClick={addManualIngredient}
-                            >
-                                추가
-                            </button>
-                        )}
-                    </div>
+                <div>
+                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>복용법</label>
+                    <input type="text" value={form.dosageText} onChange={(e) => setForm({ ...form, dosageText: e.target.value })} placeholder="예: 1일 2회, 식후 1정" style={{ width: '100%', padding: 16, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, fontSize: 16, color: '#fff', outline: 'none' }} />
+                </div>
 
-                    {/* 자동완성 결과 */}
-                    {showResults && searchResults.length > 0 && (
-                        <div className={styles.searchResults}>
-                            {searchResults.map((result) => (
-                                <button
-                                    key={result.code}
-                                    type="button"
-                                    className={styles.resultItem}
-                                    onClick={() => selectIngredient(result)}
-                                >
-                                    <div>
-                                        <span className={styles.resultName}>{result.nameKo}</span>
-                                        {result.nameEn && (
-                                            <span className={styles.resultNameEn}>{result.nameEn}</span>
-                                        )}
-                                    </div>
-                                    {result.category && (
-                                        <span className={styles.resultCategory}>{result.category}</span>
-                                    )}
-                                </button>
-                            ))}
+                <div>
+                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>성분 추가</label>
+                    <input type="text" value={searchQuery} onChange={(e) => handleSearch(e.target.value)} placeholder="성분명 검색..." style={{ width: '100%', padding: 16, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, fontSize: 16, color: '#fff', outline: 'none' }} />
+                    {searchResults.length > 0 && (
+                        <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden' }}>
+                            {searchResults.map(r => <button key={r.code} type="button" onClick={() => addIngredient(r.nameKo)} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: 14, background: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', color: '#fff', textAlign: 'left' }}><span>{r.nameKo}</span><span style={{ fontSize: 12, color: '#64748b' }}>{r.category}</span></button>)}
                         </div>
                     )}
-
-                    {/* 빠른 추가 버튼 */}
-                    <div className={styles.quickAdd}>
-                        <p>자주 등록되는 성분:</p>
-                        <div className={styles.quickButtons}>
-                            {['와파린', '아스피린', '오메가3', '비타민D', '칼슘'].map(name => (
-                                <button
-                                    key={name}
-                                    type="button"
-                                    className={styles.quickButton}
-                                    onClick={() => onInputChange(name)}
-                                >
-                                    + {name}
-                                </button>
-                            ))}
+                    {ingredients.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                            {ingredients.map((ing, i) => <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'rgba(16,185,129,0.15)', borderRadius: 20, fontSize: 14, color: '#6ee7b7' }}>✓ {ing}<button type="button" onClick={() => setIngredients(ingredients.filter((_, j) => j !== i))} style={{ width: 18, height: 18, background: 'rgba(255,255,255,0.2)', borderRadius: '50%', color: 'inherit', fontSize: 14 }}>×</button></span>)}
                         </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* 선택된 성분 목록 */}
-                {ingredients.length > 0 && (
-                    <div className={styles.selectedIngredients}>
-                        <label>선택된 성분 ({ingredients.length}개)</label>
-                        <div className={styles.tags}>
-                            {ingredients.map((ing) => (
-                                <span
-                                    key={ing.originalName}
-                                    className={`${styles.tag} ${ing.code ? styles.matched : styles.unmatched}`}
-                                >
-                                    {ing.code ? '✓' : '?'} {ing.nameKo}
-                                    <button type="button" onClick={() => removeIngredient(ing.originalName)}>×</button>
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <div style={{ flex: 1 }} />
 
-                {/* 제출 버튼 */}
-                <button
-                    type="submit"
-                    className={styles.submitBtn}
-                    disabled={loading || !name.trim()}
-                >
-                    {loading ? '등록 중...' : '✓ 내 약상자에 추가'}
-                </button>
+                <button type="submit" style={{ width: '100%', padding: 18, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: 14, color: '#fff', fontSize: 17, fontWeight: 700, marginBottom: 'max(16px, env(safe-area-inset-bottom))' }}>✓ 등록하기</button>
             </form>
-
-            <div className={styles.hint}>
-                💡 <strong>Tip:</strong> 성분을 정확히 등록하면 새로운 약 스캔 시 상호작용을 더 정확히 분석할 수 있어요!
-            </div>
         </div>
     );
 }
