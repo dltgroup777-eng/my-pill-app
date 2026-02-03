@@ -1,0 +1,45 @@
+{
+    "name": "medicine-checker",
+    "version": 2,
+    "framework": "nextjs",
+    "buildCommand": "npm run build",
+    "outputDirectory": ".next",
+    "regions": [
+        "icn1"
+    ],
+    "env": {
+        "DATABASE_URL": "file:./dev.db",
+        "JWT_ACCESS_SECRET": "dev-access-secret-key-for-testing",
+        "JWT_REFRESH_SECRET": "dev-refresh-secret-key-for-testing"
+    },
+    "headers": [
+        {
+            "source": "/sw.js",
+            "headers": [
+                {
+                    "key": "Service-Worker-Allowed",
+                    "value": "/"
+                },
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=0, must-revalidate"
+                }
+            ]
+        },
+        {
+            "source": "/manifest.json",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=86400"
+                }
+            ]
+        }
+    ],
+    "rewrites": [
+        {
+            "source": "/",
+            "destination": "/home"
+        }
+    ]
+}

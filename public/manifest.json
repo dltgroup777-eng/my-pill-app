@@ -1,0 +1,109 @@
+{
+    "name": "복용약 안전 체커",
+    "short_name": "약안전",
+    "description": "약물 상호작용을 분석하여 안전한 복용을 도와드립니다",
+    "start_url": "/products",
+    "display": "standalone",
+    "background_color": "#0a1628",
+    "theme_color": "#3b82f6",
+    "orientation": "portrait",
+    "scope": "/",
+    "lang": "ko",
+    "icons": [
+        {
+            "src": "/icons/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "약 스캔하기",
+            "short_name": "스캔",
+            "description": "새 약물/영양제 스캔",
+            "url": "/scan",
+            "icons": [
+                {
+                    "src": "/icons/scan-icon.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "내 약상자",
+            "short_name": "약상자",
+            "description": "복용 중인 약 관리",
+            "url": "/products",
+            "icons": [
+                {
+                    "src": "/icons/products-icon.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "categories": [
+        "health",
+        "medical",
+        "lifestyle"
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshots/scan.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "약 스캔 화면"
+        },
+        {
+            "src": "/screenshots/results.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "분석 결과 화면"
+        }
+    ]
+}

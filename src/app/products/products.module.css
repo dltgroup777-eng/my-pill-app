@@ -1,0 +1,292 @@
+/* 내 약상자 페이지 스타일 */
+.container {
+    min-height: 100vh;
+    padding-bottom: 80px;
+    background: linear-gradient(180deg, #0a1628 0%, #1a2744 100%);
+}
+
+/* 로딩 */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 16px;
+    color: #94a3b8;
+    background: #0a1628;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 헤더 */
+.header {
+    text-align: center;
+    padding: 40px 20px 30px;
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+}
+
+.headerIcon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+.header p {
+    font-size: 15px;
+    color: #94a3b8;
+}
+
+/* 컨텐츠 */
+.content {
+    padding: 0 20px;
+}
+
+/* 추가 버튼 */
+.addButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.addButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.addIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    font-size: 18px;
+}
+
+/* 빈 상태 */
+.empty {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+}
+
+.emptyIcon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    opacity: 0.7;
+}
+
+.empty h3 {
+    font-size: 18px;
+    color: #e2e8f0;
+    margin-bottom: 8px;
+}
+
+.empty p {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* 리스트 */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.listHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+
+.listHeader span {
+    font-size: 14px;
+    color: #64748b;
+}
+
+/* 제품 카드 */
+.productCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    transition: all 0.2s;
+}
+
+.productCard:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.productMain {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.productIcon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.productInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.productInfo h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ingredientTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ingredientTag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: 12px;
+    font-size: 12px;
+    color: #93c5fd;
+}
+
+.moreTag {
+    display: inline-block;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.noIngredients {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.deleteBtn {
+    padding: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s;
+}
+
+.deleteBtn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* 하단 네비게이션 */
+.bottomNav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    background: #0f172a;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.navItem {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 0;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.navIcon {
+    font-size: 22px;
+}
+
+.navLabel {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.navItem.active .navLabel {
+    color: #3b82f6;
+}
+
+.navItem:hover .navLabel {
+    color: #94a3b8;
+}
+
+.navItem.active:hover .navLabel {
+    color: #60a5fa;
+}
+
+/* 반응형 */
+@media (min-width: 640px) {
+    .container {
+        max-width: 480px;
+        margin: 0 auto;
+    }
+
+    .bottomNav {
+        max-width: 480px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
