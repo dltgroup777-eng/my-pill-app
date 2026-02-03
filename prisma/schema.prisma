@@ -1,195 +1,103 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
-// ============================================
-// 사용자 관련 테이블
-// ============================================
-
-// 사용자 계정
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  premium      Boolean   @default(false)
-  premiumUntil DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  profile   UserProfile?
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  profile   UserHealthProfile?
   products  Product[]
   scanLogs  ScanLog[]
-  eventLogs EventLog[]
 }
 
-// 사용자 건강 프로필 (5가지 핵심 건강 설문)
-model UserProfile {
-  id                 String  @id @default(cuid())
-  userId             String  @unique
-  name               String
-  ageBand            String  // '20s' | '30s' | '40s' | '50s' | '60+'
-  liverIssue         Boolean @default(false)  // 간질환
-  kidneyIssue        Boolean @default(false)  // 신장질환
-  bleedingRisk       Boolean @default(false)  // 출혈위험
-  pregnancyLactation Boolean @default(false)  // 임신/수유
-  allergyInfo        String? // JSON: 알레르기 정보
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model UserHealthProfile {
+  id                  String  @id @default(cuid())
+  userId              String  @unique
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                String?
+  ageBand             String?
+  liverIssue          Boolean @default(false)
+  kidneyIssue         Boolean @default(false)
+  bleedingRisk        Boolean @default(false)
+  pregnancyLactation  Boolean @default(false)
 }
 
-// ============================================
-// 성분 표준화 테이블 (Single Source of Truth)
-// ============================================
-
-// 표준 성분 마스터 테이블
-model StandardIngredient {
-  id               String   @id @default(cuid())
-  code             String   @unique  // 고유 코드 (예: RxNorm CUI)
-  nameKo           String   // 한국어 표준명
-  nameEn           String?  // 영어명
-  category         String?  // 분류 (진통제, 항생제, 비타민 등)
-  therapeuticGroup String?  // 효능군 (동일 효능군 중복 체크용)
-  maxDailyDose     Float?   // 1일 최대 용량
-  maxDailyUnit     String?  // 용량 단위 (mg, g 등)
-  description      String?  // 성분 설명
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  aliases            IngredientAlias[]
-  productIngredients ProductIngredient[]
-  rulesAsTrigger     InteractionRule[]   @relation("TriggerIngredient")
-  rulesAsTarget      InteractionRule[]   @relation("TargetIngredient")
-}
-
-// 성분 별명(Alias) 매핑 테이블
-// OCR에서 추출한 다양한 표기 → 표준 성분으로 연결
-model IngredientAlias {
-  id                   String  @id @default(cuid())
-  standardIngredientId String
-  aliasName            String  @unique  // OCR에서 추출 가능한 이름
-  aliasType            String? // 'brand' | 'generic' | 'abbreviation' | 'korean' | 'english'
-  priority             Int     @default(0)  // 검색 우선순위
-  createdAt            DateTime @default(now())
-
-  standardIngredient StandardIngredient @relation(fields: [standardIngredientId], references: [id], onDelete: Cascade)
-
-  @@index([aliasName])
-}
-
-// ============================================
-// 제품 (내 약상자) 관련 테이블
-// ============================================
-
-// 복용 중인 제품 (약/영양제)
 model Product {
-  id         String   @id @default(cuid())
-  userId     String
-  name       String
-  type       String   // 'medicine' | 'supplement'
-  schedule   String   // JSON: 복용 시간표
-  dosageText String?
-  imageUrl   String?  // 제품 이미지 URL (24시간 후 삭제)
-  imageExpiry DateTime? // 이미지 만료 시간
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  type        String   @default("medicine")
+  dosageText  String?
+  createdAt   DateTime @default(now())
   ingredients ProductIngredient[]
 }
 
-// 제품-성분 연결 테이블 (개선됨)
 model ProductIngredient {
-  id                   String   @id @default(cuid())
-  productId            String
-  standardIngredientId String
-  originalName         String?  // OCR로 추출한 원본 텍스트 (디버깅용)
-  amount               Float?
-  unit                 String?
-  createdAt            DateTime @default(now())
-
-  product            Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-  standardIngredient StandardIngredient @relation(fields: [standardIngredientId], references: [id])
-
-  @@index([productId])
-  @@index([standardIngredientId])
+  id                    String             @id @default(cuid())
+  productId             String
+  product               Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  standardIngredientId  String
+  standardIngredient    StandardIngredient @relation(fields: [standardIngredientId], references: [id])
+  originalName          String?
+  amount                Float?
+  unit                  String?
 }
 
-// ============================================
-// 위험 분석 룰 테이블
-// ============================================
+model StandardIngredient {
+  id               String   @id @default(cuid())
+  code             String   @unique
+  nameKo           String
+  nameEn           String?
+  category         String?
+  therapeuticGroup String?
+  aliases          IngredientAlias[]
+  products         ProductIngredient[]
+  triggerRules     InteractionRule[] @relation("TriggerIngredient")
+  targetRules      InteractionRule[] @relation("TargetIngredient")
+}
 
-// 상호작용 룰 테이블 (개선됨)
+model IngredientAlias {
+  id                    String             @id @default(cuid())
+  standardIngredientId  String
+  standardIngredient    StandardIngredient @relation(fields: [standardIngredientId], references: [id], onDelete: Cascade)
+  aliasName             String
+  priority              Int                @default(1)
+}
+
 model InteractionRule {
-  id                    String  @id @default(cuid())
-  category              String  // 'ddi' | 'hdi' | 'fdi' | 'duplication' | 'overdose'
-  triggerIngredientId   String  // 트리거 성분
-  targetIngredientId    String? // 상호작용 대상 성분 (중복/과량은 null)
-  baseRisk              String  // 'notice' | 'warning' | 'danger'
-  
-  // 개인화 가중치 조건
-  liverRiskWeight       Float   @default(1.0)  // 간질환 시 위험 가중치
-  kidneyRiskWeight      Float   @default(1.0)  // 신장질환 시 가중치
-  bleedingRiskWeight    Float   @default(1.0)  // 출혈위험 시 가중치
-  pregnancyRiskWeight   Float   @default(1.0)  // 임신/수유 시 가중치
-  elderlyRiskWeight     Float   @default(1.0)  // 고령자 가중치
-
-  // 사용자 피드백용 메시지
-  conclusion            String  // 결론 (1줄 요약)
-  reason                String  // 이유 (왜 위험한지)
-  action                String  // 행동 지침 (사용자가 해야 할 일)
-  
-  evidenceUrl           String? // 근거 링크
-  isActive              Boolean @default(true)
-  version               Int     @default(1)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  triggerIngredient StandardIngredient  @relation("TriggerIngredient", fields: [triggerIngredientId], references: [id])
-  targetIngredient  StandardIngredient? @relation("TargetIngredient", fields: [targetIngredientId], references: [id])
-
-  @@index([triggerIngredientId])
-  @@index([targetIngredientId])
-  @@index([category])
+  id                   String             @id @default(cuid())
+  triggerIngredientId  String
+  triggerIngredient    StandardIngredient @relation("TriggerIngredient", fields: [triggerIngredientId], references: [id])
+  targetIngredientId   String?
+  targetIngredient     StandardIngredient? @relation("TargetIngredient", fields: [targetIngredientId], references: [id])
+  category             String             @default("ddi")
+  baseRisk             String             @default("warning")
+  conclusion           String
+  reason               String
+  action               String
+  evidenceUrl          String?
+  isActive             Boolean            @default(true)
+  elderlyWeight        Float              @default(1.0)
+  liverWeight          Float              @default(1.0)
+  kidneyWeight         Float              @default(1.0)
+  bleedingWeight       Float              @default(1.0)
+  pregnancyWeight      Float              @default(1.0)
 }
 
-// ============================================
-// 로그 테이블
-// ============================================
-
-// 스캔 기록
 model ScanLog {
-  id              String   @id @default(cuid())
-  userId          String
-  ingredientsJson String   // JSON: 스캔된 성분 목록
-  resultRisk      String   // 최종 위험 등급
-  resultsJson     String?  // JSON: 분석 결과 상세
-  ocrText         String?  // OCR 원본 텍스트 (디버깅용)
-  createdAt       DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
-// 이벤트 로그 (분석용)
-model EventLog {
-  id        String   @id @default(cuid())
-  userId    String?
-  event     String   // 이벤트 타입
-  timestamp DateTime @default(now())
-  metaJson  String?  // JSON: 추가 데이터
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([event])
-  @@index([timestamp])
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inputText     String?
+  resultJson    String
+  overallRisk   String
+  createdAt     DateTime @default(now())
 }

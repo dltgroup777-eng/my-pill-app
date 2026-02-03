@@ -1,22 +1,19 @@
-/* 홈 페이지 CSS - 모바일 최적화 */
 .container {
     min-height: 100vh;
     min-height: 100dvh;
-    background: linear-gradient(180deg, #0a1628 0%, #1a2744 100%);
-    color: #fff;
-    padding-bottom: 100px;
-}
-
-/* 로딩 */
-.loading {
     display: flex;
     flex-direction: column;
+    background: linear-gradient(180deg, #0a1628 0%, #1a2744 100%);
+    color: #fff;
+    padding-bottom: 80px;
+}
+
+.loading {
+    display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    gap: 16px;
     background: #0a1628;
-    color: #94a3b8;
 }
 
 .spinner {
@@ -34,22 +31,11 @@
     }
 }
 
-/* 개발 모드 배너 */
-.devBanner {
-    background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
-    color: #000;
-    padding: 10px 16px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-/* PWA 설치 배너 */
 .installBanner {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: 10px 16px;
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     gap: 12px;
 }
@@ -57,22 +43,22 @@
 .installContent {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    font-size: 14px;
 }
 
-.installIcon {
-    font-size: 28px;
+.installContent span:first-child {
+    font-size: 24px;
 }
 
 .installContent strong {
-    font-size: 14px;
     display: block;
+    font-size: 13px;
 }
 
 .installContent p {
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.9;
-    margin-top: 2px;
 }
 
 .installActions {
@@ -81,10 +67,10 @@
 }
 
 .installActions button {
-    padding: 8px 16px;
+    padding: 6px 14px;
     border: none;
-    border-radius: 8px;
-    font-size: 13px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     background: rgba(255, 255, 255, 0.2);
@@ -96,43 +82,20 @@
     color: #2563eb !important;
 }
 
-/* 헤더 */
 .header {
-    padding: 24px 20px 20px;
-    background: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+    padding: 20px 16px 16px;
 }
 
-.greeting {
+.headerTop {
     display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.wave {
-    font-size: 36px;
-    animation: wave 2s ease-in-out infinite;
-}
-
-@keyframes wave {
-
-    0%,
-    100% {
-        transform: rotate(0deg);
-    }
-
-    25% {
-        transform: rotate(20deg);
-    }
-
-    75% {
-        transform: rotate(-10deg);
-    }
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .greeting h1 {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .greeting p {
@@ -140,168 +103,144 @@
     color: #94a3b8;
 }
 
-/* 메인 스캔 카드 */
-.mainAction {
-    padding: 0 16px;
-    margin-bottom: 24px;
-}
-
-.scanCard {
+.profileBtn {
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 20px;
+}
+
+.mainSection {
+    padding: 0 16px;
+    margin-bottom: 20px;
+}
+
+.mainCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 20px;
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     border-radius: 16px;
-    text-decoration: none;
-    color: #fff;
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-    transition: transform 0.2s;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
 }
 
-.scanCard:active {
-    transform: scale(0.98);
+.mainCardContent {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
-.scanIcon {
-    font-size: 40px;
+.mainIcon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: rgba(255, 255, 255, 0.2);
-    padding: 12px;
-    border-radius: 12px;
+    border-radius: 14px;
+    font-size: 26px;
 }
 
-.scanContent {
-    flex: 1;
-}
-
-.scanContent h2 {
-    font-size: 18px;
+.mainText h2 {
+    font-size: 17px;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
-.scanContent p {
+.mainText p {
     font-size: 13px;
     opacity: 0.9;
 }
 
-.arrow {
-    font-size: 24px;
-    opacity: 0.7;
+.mainArrow {
+    font-size: 22px;
+    opacity: 0.8;
 }
 
-/* 섹션 */
-.section {
+.quickSection {
     padding: 0 16px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+}
+
+.quickGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.quickItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+.quickIcon {
+    font-size: 24px;
+}
+
+.quickItem span:last-child {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.productsSection {
+    padding: 0 16px;
 }
 
 .sectionHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
-.sectionHeader h2,
-.sectionTitle {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 12px;
-}
-
-.seeAll {
-    font-size: 13px;
-    color: #3b82f6;
-    text-decoration: none;
-}
-
-/* 빈 상태 */
-.empty {
-    text-align: center;
-    padding: 32px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px dashed rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-}
-
-.empty p {
-    color: #64748b;
-    margin-bottom: 12px;
-}
-
-.addLink {
-    color: #3b82f6;
-    text-decoration: none;
+.sectionHeader h3 {
+    font-size: 14px;
     font-weight: 600;
-}
-
-/* 제품 그리드 */
-.productGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-}
-
-.productCard {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-}
-
-.productIcon {
-    font-size: 24px;
-}
-
-.productName {
-    font-size: 13px;
-    font-weight: 500;
-    color: #e2e8f0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* 빠른 기능 */
-.quickActions {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-
-.quickCard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    text-decoration: none;
-    color: #fff;
-    transition: all 0.15s;
-}
-
-.quickCard:active {
-    background: rgba(59, 130, 246, 0.2);
-    border-color: #3b82f6;
-}
-
-.quickCard span:first-child {
-    font-size: 28px;
-}
-
-.quickCard span:last-child {
-    font-size: 12px;
     color: #94a3b8;
 }
 
-/* 하단 네비게이션 */
+.seeAll {
+    font-size: 12px;
+    color: #3b82f6;
+}
+
+.productChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.productChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    font-size: 13px;
+    color: #e2e8f0;
+}
+
+.moreChip {
+    padding: 8px 12px;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: 20px;
+    font-size: 13px;
+    color: #93c5fd;
+}
+
 .bottomNav {
     position: fixed;
     bottom: 0;
@@ -323,21 +262,18 @@
     align-items: center;
     gap: 4px;
     padding: 8px 0;
-    text-decoration: none;
     color: #64748b;
     font-size: 11px;
-    transition: color 0.15s;
 }
 
 .navItem span:first-child {
-    font-size: 24px;
+    font-size: 22px;
 }
 
 .navItem.active {
     color: #3b82f6;
 }
 
-/* 반응형 */
 @media (min-width: 640px) {
     .container {
         max-width: 480px;
