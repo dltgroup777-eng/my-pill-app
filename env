@@ -1,0 +1,17 @@
+# Database
+DATABASE_URL="file:./dev.db"
+
+# JWT Secrets (개발용 - 프로덕션에서는 반드시 변경)
+JWT_ACCESS_SECRET="dev-access-secret-key-12345"
+JWT_REFRESH_SECRET="dev-refresh-secret-key-67890"
+
+# Stripe (테스트 키 필요)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=""
+STRIPE_SECRET_KEY=""
+STRIPE_WEBHOOK_SECRET=""
+
+# Google Analytics
+NEXT_PUBLIC_GA_MEASUREMENT_ID=""
+
+# App URL
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
