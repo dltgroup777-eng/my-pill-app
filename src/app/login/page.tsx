@@ -29,12 +29,8 @@ export default function LoginPage() {
     };
 
     const handleBiometric = () => {
-        if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-            localStorage.setItem('user', JSON.stringify({ email: 'bio@user.com', name: '생체인증 사용자', isGuest: false }));
-            router.push('/home');
-        } else {
-            alert('이 기기에서는 생체인식을 지원하지 않습니다.');
-        }
+        localStorage.setItem('user', JSON.stringify({ email: 'bio@user.com', name: '생체인증', isGuest: false }));
+        router.push('/home');
     };
 
     return (
@@ -47,17 +43,8 @@ export default function LoginPage() {
                     <p style={{ fontSize: 14, color: '#94a3b8' }}>약물 상호작용 분석 서비스</p>
                 </div>
                 <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <label style={{ fontSize: 14, fontWeight: 600, color: '#94a3b8' }}>이메일</label>
-                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@email.com" style={{ width: '100%', padding: 16, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, fontSize: 16, color: '#fff', outline: 'none' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <label style={{ fontSize: 14, fontWeight: 600, color: '#94a3b8' }}>비밀번호</label>
-                        <div style={{ position: 'relative' }}>
-                            <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" style={{ width: '100%', padding: 16, paddingRight: 50, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, fontSize: 16, color: '#fff', outline: 'none' }} />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 20, opacity: 0.7 }}>{showPassword ? '🙈' : '👁️'}</button>
-                        </div>
-                    </div>
+                    <div><label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>이메일</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@email.com" style={{ width: '100%', padding: 16, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, fontSize: 16, color: '#fff', outline: 'none' }} /></div>
+                    <div><label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>비밀번호</label><div style={{ position: 'relative' }}><input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호 입력" style={{ width: '100%', padding: 16, paddingRight: 50, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, fontSize: 16, color: '#fff', outline: 'none' }} /><button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 20, color: '#94a3b8' }}>{showPassword ? '🙈' : '👁️'}</button></div></div>
                     {error && <p style={{ padding: 12, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontSize: 14, textAlign: 'center' }}>{error}</p>}
                     <button type="submit" disabled={loading} style={{ width: '100%', padding: 18, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', borderRadius: 14, color: '#fff', fontSize: 17, fontWeight: 700, opacity: loading ? 0.6 : 1 }}>{loading ? '로그인 중...' : '로그인'}</button>
                 </form>
